@@ -1,18 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using DotNetCoreSqlDb.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add database context
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDbContext<MyDatabaseContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbConnection")));
-}
-else
-{
-    builder.Services.AddDbContext<MyDatabaseContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
-}
+// Safely retrieve the connection string from any location Azure might store it
+var connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING") 
+    ?? builder.Configuration.GetConnectionString("MyDbConnection") 
+    ?? Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
+
+// Add database context using the resolved string
+builder.Services.AddDbContext<MyDatabaseContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
